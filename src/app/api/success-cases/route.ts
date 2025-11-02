@@ -62,10 +62,12 @@ export async function POST(request: Request) {
     // 2. embeddingを生成
     const text = `タイトル: ${title}\n内容: ${content}\nシチュエーション: ${situation}\nギフト: ${giftName}`;
 
-    const { embedding } = await embed({
-      model: openai.embedding("text-embedding-3-small"),
+    const { embedding, usage, response } = await embed({
+      model: openai.textEmbeddingModel("text-embedding-3-small"),
       value: text,
     });
+    console.log("Embedding usage:", usage);
+    console.log("Generated embedding:", response);
 
     // 3. Supabaseに保存
     const { data: successCase, error } = await supabaseAdmin
