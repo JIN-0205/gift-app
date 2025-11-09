@@ -1,8 +1,10 @@
 import { GiftCard } from "@/components/GiftCard";
 import { prisma } from "@/lib/prisma";
-import type { Gift } from "@prisma/client";
+// import type { Gift } from "@prisma/client";
 import { Prisma } from "@prisma/client";
 import Link from "next/link";
+
+type Gift = Prisma.GiftGetPayload<object>;
 
 type GiftWithCases = Gift & { casesCount: number };
 
