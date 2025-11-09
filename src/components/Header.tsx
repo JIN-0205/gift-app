@@ -12,7 +12,7 @@ export function Header() {
               width={150}
               height={50}
             /> */}
-            gifteee
+            gift
           </Link>
           <div className="flex gap-6 items-center">
             <Link
