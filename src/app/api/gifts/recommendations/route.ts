@@ -1,5 +1,5 @@
 import { buildRecommendationContext } from "@/lib/recommendations";
-import { prisma } from "@/lib/prisma";
+import { supabaseAdmin } from "@/lib/supabase";
 import { NextRequest } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -24,14 +24,24 @@ export async function POST(request: NextRequest) {
       recommendedGiftIds
     );
 
-    const gifts = await prisma.gift.findMany({
-      where: { id: { in: recommendedGiftIds } },
-    });
+    const { data: gifts, error: giftsError } = await supabaseAdmin
+      .from("gifts")
+      .select("*")
+      .in("id", recommendedGiftIds);
 
-    const giftsById = new Map(gifts.map((gift) => [gift.id, gift]));
+    if (giftsError) {
+      console.error("[gifts/recommendations] Supabase error:", giftsError);
+      return Response.json(
+        { error: "Failed to load gift details" },
+        { status: 500 }
+      );
+    }
+
+    const giftsData = gifts ?? [];
+    const giftsById = new Map(giftsData.map((gift) => [gift.id, gift]));
     const orderedGifts = recommendedGiftIds
       .map((id) => giftsById.get(id))
-      .filter((gift): gift is (typeof gifts)[number] => Boolean(gift));
+      .filter((gift): gift is (typeof giftsData)[number] => Boolean(gift));
 
     const missingIds = recommendedGiftIds.filter((id) => !giftsById.has(id));
     if (missingIds.length > 0) {

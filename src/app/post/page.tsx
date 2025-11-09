@@ -12,7 +12,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -179,9 +178,9 @@ export default function PostPage() {
                           {...field}
                         />
                       </FormControl>
-                      <FormDescription>
+                      {/* <FormDescription>
                         詳しく書くほど、AIの提案精度が上がります
-                      </FormDescription>
+                      </FormDescription> */}
                       <FormMessage />
                     </FormItem>
                   )}
@@ -190,7 +189,7 @@ export default function PostPage() {
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full"
+                  className="w-full bg-giftee hover:bg-giftee/90 text-lg "
                 >
                   {isSubmitting ? "投稿中..." : "投稿する"}
                 </Button>

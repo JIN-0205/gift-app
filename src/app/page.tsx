@@ -1,7 +1,7 @@
 import { GiftCard } from "@/components/GiftCard";
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
 import type { Gift } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import Link from "next/link";
 
 type GiftWithCases = Gift & { casesCount: number };
@@ -20,10 +20,9 @@ async function getGifts(): Promise<GiftWithCases[]> {
 
     const giftIds = gifts.map((gift) => gift.id);
 
-    const successCaseCounts =
-      await prisma.$queryRaw<
-        { gift_id: string; cases_count: number | bigint }[]
-      >(Prisma.sql`
+    const successCaseCounts = await prisma.$queryRaw<
+      { gift_id: string; cases_count: number | bigint }[]
+    >(Prisma.sql`
         SELECT gift_id, COUNT(*)::int AS cases_count
         FROM success_cases
         WHERE gift_id IN (${Prisma.join(
@@ -56,13 +55,13 @@ export default async function HomePage() {
     <div className="container-custom py-12">
       {/* ヒーローセクション */}
       <div className="text-center mb-12">
-        <h1 className="text-5xl font-bold text-gray-900 mb-4">Gift Finder</h1>
+        <h1 className="text-5xl font-bold text-gray-900 mb-4">Gifteee</h1>
         <p className="text-xl text-gray-600 mb-8">
           AIがあなたに最適なギフトを提案します
         </p>
         <Link
           href="/chat"
-          className="inline-block bg-blue-500 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-600 transition-colors"
+          className="inline-block bg-giftee text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-giftee/80 transition-colors"
         >
           💬 チャットで相談する
         </Link>

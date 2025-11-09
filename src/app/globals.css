@@ -120,3 +120,11 @@
     @apply bg-background text-foreground;
   }
 }
+@layer components {
+  .container-custom {
+    @apply max-w-6xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+}
+@theme {
+  --color-giftee: #f08b71;
+}
