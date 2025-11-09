@@ -24,12 +24,13 @@ export function GiftCard({
       {imageUrl && (
         <div className="relative w-full h-40 mb-4 overflow-hidden rounded-md border border-gray-100">
           <Image
-            src={imageUrl}
+            src={imageUrl + "?auto=format&fit=max&w=1200&q=80"}
             alt={name}
             fill
             className="object-cover"
             sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
-            priority={false}
+            // priority={false}
+            loading="eager"
           />
         </div>
       )}
