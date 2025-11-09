@@ -17,7 +17,10 @@ export async function POST(request: NextRequest) {
 
     console.log("[gifts/batch] Found gifts:", gifts.length);
 
-    const giftsById = new Map(gifts.map((gift) => [gift.id, gift]));
+    type GiftRecord = (typeof gifts)[number];
+    const giftsById = new Map<string, GiftRecord>(
+      gifts.map((gift: GiftRecord) => [gift.id, gift])
+    );
     const orderedGifts = ids
       .map((id) => giftsById.get(id))
       .filter((gift): gift is (typeof gifts)[number] => Boolean(gift));
