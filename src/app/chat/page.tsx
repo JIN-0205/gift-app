@@ -6,7 +6,11 @@ import {
   ConversationEmptyState,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
-import { Message, MessageContent } from "@/components/ai-elements/message";
+import {
+  Message,
+  MessageContent,
+  MessageResponse,
+} from "@/components/ai-elements/message";
 import {
   PromptInput,
   PromptInputAttachment,
@@ -20,7 +24,6 @@ import {
   PromptInputTextarea,
   PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
-import { Response } from "@/components/ai-elements/response";
 import { GiftCard } from "@/components/GiftCard";
 import { Gift } from "@/lib/types";
 
@@ -103,7 +106,7 @@ const Example = () => {
               return (
                 <Message from={m.role} key={m.id}>
                   <MessageContent>
-                    <Response>{displayText}</Response>
+                    <MessageResponse>{displayText}</MessageResponse>
                   </MessageContent>
                 </Message>
               );
