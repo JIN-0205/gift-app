@@ -15,29 +15,9 @@
 //   return result.toUIMessageStreamResponse();
 // }
 
-import { supabaseAdmin } from "@/lib/supabase";
+import { buildRecommendationContext } from "@/lib/recommendations";
 import { openai } from "@ai-sdk/openai";
-import { convertToModelMessages, embed, streamText, UIMessage } from "ai";
-
-// 型定義: Supabase関数 match_success_cases の戻り値
-interface SimilarCase {
-  id: string;
-  gift_id: string;
-  title: string;
-  content: string;
-  situation: string;
-  similarity: number;
-}
-
-// 型定義: Giftテーブルのベクトル検索結果
-interface SimilarGift {
-  id: string;
-  name: string;
-  description?: string;
-  category?: string;
-  price?: number;
-  similarity: number;
-}
+import { convertToModelMessages, streamText, UIMessage } from "ai";
 
 // ヘルパー関数: UIMessageからテキストを安全に取得
 function getTextFromMessage(message: UIMessage): string {
@@ -68,104 +48,11 @@ export async function POST(req: Request) {
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
-
     console.log("User message:", userText);
 
-    // RAG: ユーザーメッセージをembedding化
-    const { embedding } = await embed({
-      model: openai.embedding("text-embedding-3-small"),
-      value: userText,
-    });
-
-    // ステップ1: 類似体験談を検索
-    const { data: similarCases, error: searchError } = await supabaseAdmin.rpc(
-      "match_success_cases",
-      {
-        query_embedding: embedding,
-        match_threshold: 0.5,
-        match_count: 5,
-      }
+    const { context, recommendedGiftIds } = await buildRecommendationContext(
+      userText
     );
-
-    if (searchError) {
-      console.error("Success cases search error:", searchError);
-    }
-
-    const typedSimilarCases = (similarCases || []) as SimilarCase[];
-    console.log(`Found ${typedSimilarCases.length} similar cases`);
-
-    // ステップ2: 体験談が少ない場合、giftテーブルからも検索
-    let giftContext = "";
-    const recommendedGiftIdSet = new Set<string>();
-
-    // 類似体験談からギフトIDを収集
-    typedSimilarCases.forEach((c) => {
-      if (c.gift_id) {
-        recommendedGiftIdSet.add(c.gift_id);
-      }
-    });
-
-    if (typedSimilarCases.length < 3) {
-      console.log("Searching gifts as fallback...");
-
-      // giftsテーブル用の検索関数を呼び出し（存在する場合）
-      const { data: similarGifts, error: giftSearchError } =
-        await supabaseAdmin.rpc("match_gifts", {
-          query_embedding: embedding,
-          match_threshold: 0.5,
-          match_count: 5,
-        });
-      console.log("Similar gifts data:", similarGifts);
-
-      if (giftSearchError) {
-        console.log(
-          "Gift search not available or error:",
-          giftSearchError.message
-        );
-      } else if (similarGifts && similarGifts.length > 0) {
-        const typedSimilarGifts = similarGifts as SimilarGift[];
-        console.log(`Found ${typedSimilarGifts.length} similar gifts`);
-
-        // ギフトIDを保存
-        typedSimilarGifts.forEach((g) => recommendedGiftIdSet.add(g.id));
-
-        giftContext =
-          "\n\n【関連するギフト】\n" +
-          typedSimilarGifts
-            .map(
-              (g: SimilarGift, index: number) =>
-                `${index + 1}. ${g.name}${
-                  g.description ? `: ${g.description}` : ""
-                } (類似度: ${(g.similarity * 100).toFixed(1)}%)`
-            )
-            .join("\n");
-      }
-    }
-
-    // コンテキストを構築
-    const casesContext =
-      typedSimilarCases.length > 0
-        ? typedSimilarCases
-            .map(
-              (c: SimilarCase, index: number) =>
-                `【体験談${index + 1}: ${c.title}】\nシチュエーション: ${
-                  c.situation
-                }\n内容: ${c.content}\n(類似度: ${(c.similarity * 100).toFixed(
-                  1
-                )}%)`
-            )
-            .join("\n\n")
-        : "";
-
-    const recommendedGiftIds = Array.from(recommendedGiftIdSet);
-
-    const context =
-      casesContext || giftContext
-        ? casesContext + giftContext
-        : "まだ参考になる体験談やギフト情報がありません。一般的な知識から提案します。";
-
-    console.log("Final context length:", context.length);
-    console.log("Final context:", context);
 
     // LLMでストリーミング応答（ギフトIDを含めて返す）
     const result = streamText({
