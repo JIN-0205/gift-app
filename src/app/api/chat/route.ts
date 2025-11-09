@@ -96,7 +96,14 @@ export async function POST(req: Request) {
 
     // ステップ2: 体験談が少ない場合、giftテーブルからも検索
     let giftContext = "";
-    let recommendedGiftIds: string[] = [];
+    const recommendedGiftIdSet = new Set<string>();
+
+    // 類似体験談からギフトIDを収集
+    typedSimilarCases.forEach((c) => {
+      if (c.gift_id) {
+        recommendedGiftIdSet.add(c.gift_id);
+      }
+    });
 
     if (typedSimilarCases.length < 3) {
       console.log("Searching gifts as fallback...");
@@ -120,7 +127,7 @@ export async function POST(req: Request) {
         console.log(`Found ${typedSimilarGifts.length} similar gifts`);
 
         // ギフトIDを保存
-        recommendedGiftIds = typedSimilarGifts.map((g) => g.id);
+        typedSimilarGifts.forEach((g) => recommendedGiftIdSet.add(g.id));
 
         giftContext =
           "\n\n【関連するギフト】\n" +
@@ -149,6 +156,8 @@ export async function POST(req: Request) {
             )
             .join("\n\n")
         : "";
+
+    const recommendedGiftIds = Array.from(recommendedGiftIdSet);
 
     const context =
       casesContext || giftContext

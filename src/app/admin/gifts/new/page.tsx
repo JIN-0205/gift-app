@@ -46,7 +46,10 @@ const formSchema = z.object({
       message: "価格は数値で入力してください",
     }),
   imageUrl: z
-    .string()
+    .url({ message: "有効なURLを入力してください" })
+    .optional()
+    .or(z.literal("")),
+  url: z
     .url({ message: "有効なURLを入力してください" })
     .optional()
     .or(z.literal("")),
@@ -65,6 +68,7 @@ export default function NewGiftPage() {
       category: "",
       price: "",
       imageUrl: "",
+      url: "",
     },
   });
 
@@ -82,6 +86,7 @@ export default function NewGiftPage() {
           category: values.category || undefined,
           price: values.price ? Number(values.price) : undefined,
           imageUrl: values.imageUrl || undefined,
+          url: values.url || undefined,
         }),
       });
 
@@ -213,6 +218,24 @@ export default function NewGiftPage() {
                         <Input
                           type="url"
                           placeholder="例: https://example.com/image.jpg"
+                          disabled={isSubmitting}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="url"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>参照URL（任意）</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="url"
+                          placeholder="例: https://example.com"
                           disabled={isSubmitting}
                           {...field}
                         />
