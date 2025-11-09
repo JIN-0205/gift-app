@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { Gift } from "@prisma/client";
 import { NextRequest } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -11,13 +12,15 @@ export async function POST(request: NextRequest) {
 
     console.log("[gifts/batch] Requested IDs:", ids);
 
-    const gifts = await prisma.gift.findMany({
+    const gifts: Gift[] = await prisma.gift.findMany({
       where: { id: { in: ids } },
     });
 
     console.log("[gifts/batch] Found gifts:", gifts.length);
 
-    const giftsById = new Map(gifts.map((gift) => [gift.id, gift]));
+    const giftsById = new Map<string, Gift>(
+      gifts.map((gift: Gift) => [gift.id, gift])
+    );
     const orderedGifts = ids
       .map((id) => giftsById.get(id))
       .filter((gift): gift is (typeof gifts)[number] => Boolean(gift));
