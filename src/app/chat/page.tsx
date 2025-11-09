@@ -29,7 +29,7 @@ import { Gift } from "@/lib/types";
 
 import { useChat } from "@ai-sdk/react";
 import { MessageSquareIcon } from "lucide-react";
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useCallback, useRef, useState } from "react";
 
 const Example = () => {
   const { messages, sendMessage, status } = useChat();
@@ -37,39 +37,39 @@ const Example = () => {
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [recommendedGifts, setRecommendedGifts] = useState<Gift[]>([]);
+  const recommendationRequestIdRef = useRef(0);
 
-  // メッセージからギフトIDを抽出し、ギフト情報を取得
-  useEffect(() => {
-    const lastMessage = messages[messages.length - 1];
-    if (!lastMessage || lastMessage.role !== "assistant") return;
+  const fetchRecommendedGifts = useCallback(async (query: string) => {
+    const trimmed = query.trim();
+    if (!trimmed) {
+      setRecommendedGifts([]);
+      return;
+    }
 
-    const textContent = lastMessage.parts
-      ?.filter((p) => p.type === "text")
-      .map((p) => (p.type === "text" ? p.text : ""))
-      .join("");
-
-    if (!textContent) return;
-
-    // [RECOMMENDED_GIFTS:id1,id2,id3] のような形式からIDを抽出
-    const match = textContent.match(/\[RECOMMENDED_GIFTS:(.*?)\]/);
-    if (match && match[1]) {
-      const giftIds = match[1].split(",").map((id) => id.trim());
-
-      // ギフト情報を取得
-      fetch("/api/gifts/batch", {
+    const requestId = ++recommendationRequestIdRef.current;
+    try {
+      const response = await fetch("/api/gifts/recommendations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: giftIds }),
-      })
-        .then((res) => res.json())
-        .then((gifts) => {
-          setRecommendedGifts(gifts);
-        })
-        .catch((error) => {
-          console.error("Failed to fetch gifts:", error);
-        });
+        body: JSON.stringify({ message: trimmed }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to load recommendations: ${response.status}`);
+      }
+
+      const gifts: Gift[] = await response.json();
+      if (requestId === recommendationRequestIdRef.current) {
+        setRecommendedGifts(gifts);
+        console.log("Recommended gifts:", gifts);
+      }
+    } catch (error) {
+      if (requestId === recommendationRequestIdRef.current) {
+        setRecommendedGifts([]);
+      }
+      console.error("Failed to fetch recommended gifts:", error);
     }
-  }, [messages]);
+  }, []);
 
   const handleSubmit = (message: PromptInputMessage, e: FormEvent) => {
     e.preventDefault();
@@ -78,6 +78,12 @@ const Example = () => {
     if (!(hasText || hasAttachments)) {
       return;
     }
+    if (message.text) {
+      void fetchRecommendedGifts(message.text);
+    } else {
+      setRecommendedGifts([]);
+    }
+
     sendMessage({ text: message.text || "" });
     console.log("Submitting message:", message);
   };

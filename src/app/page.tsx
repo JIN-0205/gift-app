@@ -1,15 +1,48 @@
 import { GiftCard } from "@/components/GiftCard";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
+import type { Gift } from "@prisma/client";
 import Link from "next/link";
 
-async function getGifts() {
+type GiftWithCases = Gift & { casesCount: number };
+
+async function getGifts(): Promise<GiftWithCases[]> {
   try {
     const gifts = await prisma.gift.findMany({
       where: { isActive: true },
       orderBy: { createdAt: "desc" },
       take: 12,
     });
-    return gifts;
+
+    if (gifts.length === 0) {
+      return [];
+    }
+
+    const giftIds = gifts.map((gift) => gift.id);
+
+    const successCaseCounts =
+      await prisma.$queryRaw<
+        { gift_id: string; cases_count: number | bigint }[]
+      >(Prisma.sql`
+        SELECT gift_id, COUNT(*)::int AS cases_count
+        FROM success_cases
+        WHERE gift_id IN (${Prisma.join(
+          giftIds.map((giftId) => Prisma.sql`${giftId}::uuid`)
+        )})
+        GROUP BY gift_id
+      `);
+
+    const countsMap = new Map(
+      successCaseCounts.map(({ gift_id, cases_count }) => [
+        gift_id,
+        Number(cases_count),
+      ])
+    );
+
+    return gifts.map((gift) => ({
+      ...gift,
+      casesCount: countsMap.get(gift.id) ?? 0,
+    }));
   } catch (error) {
     console.error("Error fetching gifts:", error);
     return [];
@@ -42,7 +75,7 @@ export default async function HomePage() {
         {gifts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {gifts.map((gift) => (
-              <GiftCard key={gift.id} {...gift} casesCount={0} />
+              <GiftCard key={gift.id} {...gift} />
             ))}
           </div>
         ) : (
