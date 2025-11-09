@@ -55,7 +55,7 @@ export default async function HomePage() {
     <div className="container-custom py-12">
       {/* ヒーローセクション */}
       <div className="text-center mb-12">
-        <h1 className="text-5xl font-bold text-gray-900 mb-4">Gifteee</h1>
+        <h1 className="text-5xl font-bold text-gray-900 mb-4">Gift</h1>
         <p className="text-xl text-gray-600 mb-8">
           AIがあなたに最適なギフトを提案します
         </p>
