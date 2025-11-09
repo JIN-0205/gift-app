@@ -1,4 +1,7 @@
+import Image from "next/image";
+
 import { Gift } from "@/lib/types";
+import Link from "next/link";
 
 interface GiftCardProps extends Gift {
   casesCount?: number;
@@ -8,10 +11,29 @@ export function GiftCard({
   name,
   category,
   price,
+  imageUrl,
+  url,
   casesCount = 0,
 }: GiftCardProps) {
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+    <Link
+      href={url ?? "#"}
+      target="_blank"
+      className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+    >
+      {imageUrl && (
+        <div className="relative w-full h-40 mb-4 overflow-hidden rounded-md border border-gray-100">
+          <Image
+            src={imageUrl}
+            alt={name}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
+            priority={false}
+          />
+        </div>
+      )}
+
       <h3 className="text-xl font-semibold text-gray-900 mb-2">{name}</h3>
 
       {category && (
@@ -29,6 +51,6 @@ export function GiftCard({
       <div className="mt-4 pt-4 border-t">
         <p className="text-sm text-gray-500">📝 {casesCount}件の体験談</p>
       </div>
-    </div>
+    </Link>
   );
 }
